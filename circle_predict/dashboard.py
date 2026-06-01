@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone
 
 from circle_predict.config import LONG_WINDOW, MARKETS, SHORT_WINDOW
 from circle_predict.data_provider import MarketDataProvider, RealMarketDataProvider
 from circle_predict.scoring import build_market_payload
 
 
+UTC = timezone.utc
 _CACHE: dict | None = None
 _CACHE_EXPIRES_AT: datetime | None = None
 BEIJING_TZ = timezone(timedelta(hours=8))

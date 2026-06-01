@@ -57,7 +57,7 @@ The score is a cycle-position signal, not a short-term price forecast.
 ## Requirements
 
 - macOS or Linux
-- Python 3.11+ recommended
+- Python 3.9+; Python 3.11+ recommended
 - Network access to the configured data sources
 - Optional: local HTTP proxy if your environment needs one
 - Optional: WeCom group robot webhook for daily reports
@@ -79,6 +79,13 @@ WeCom webhook, and public dashboard URL as needed:
 
 ```bash
 cp .env.example .env
+```
+
+Install dependencies. The project currently uses only the Python standard
+library, so this is a no-op, but it is safe to run on every machine:
+
+```bash
+python3 -m pip install -r requirements.txt
 ```
 
 ```bash

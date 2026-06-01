@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import unittest
-from datetime import UTC, date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 from circle_predict.config import LONG_WINDOW, SHORT_WINDOW
 from circle_predict.data_provider import SampleMarketDataProvider
@@ -9,6 +9,9 @@ from circle_predict.daily_report import build_daily_report
 from circle_predict.dashboard import build_dashboard_payload, next_cache_expiry
 from circle_predict.models import Direction, IndicatorObservation, MarketDataset, ScoreWindow
 from circle_predict.scoring import build_market_payload, percentile_score, score_market_window
+
+
+UTC = timezone.utc
 
 
 class ScoringTests(unittest.TestCase):
