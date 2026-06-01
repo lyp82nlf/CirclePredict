@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CirclePredict</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">CirclePredict</p>
+          <h1>三市场周期评分</h1>
+        </div>
+        <div class="meta">
+          <span id="generatedAt">加载中</span>
+          <span>高分 = 高估/狂热程度更高</span>
+        </div>
+      </header>
+      <section id="dataNotice" class="data-notice" aria-live="polite"></section>
+
+      <section id="marketCards" class="market-grid" aria-label="市场总览"></section>
+
+      <section class="panel chart-panel">
+        <div class="panel-head">
+          <div>
+            <p class="eyebrow">History</p>
+            <h2>长周期位置曲线</h2>
+          </div>
+          <div class="chart-tools">
+            <div id="marketFilter" class="market-filter" aria-label="市场筛选"></div>
+            <div id="rangePicker" class="range-picker" aria-label="历史周期筛选"></div>
+            <div id="chartLegend" class="legend"></div>
+          </div>
+        </div>
+        <div id="scoreChart" class="score-chart" role="img" aria-label="三类市场历史评分曲线"></div>
+        <div id="historyInspector" class="history-inspector"></div>
+      </section>
+
+      <section class="detail-grid">
+        <article class="panel">
+          <div class="panel-head compact">
+            <div>
+              <p class="eyebrow">Dimensions</p>
+              <h2>四维拆解</h2>
+            </div>
+          </div>
+          <div id="dimensionBreakdown" class="dimension-list"></div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-head compact">
+            <div>
+              <p class="eyebrow">Indicators</p>
+              <h2>指标明细</h2>
+            </div>
+          </div>
+          <div id="indicatorTable" class="indicator-table"></div>
+        </article>
+      </section>
+    </main>
+
+    <script src="/app.js?v=20260529-data-notice"></script>
+  </body>
+</html>
