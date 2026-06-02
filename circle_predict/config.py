@@ -73,6 +73,9 @@ SOURCE_LINKS = {
     "Eastmoney": "https://quote.eastmoney.com/center/",
     "Binance Spot": "https://api.binance.com/api/v3/klines",
     "Binance Futures": "https://fapi.binance.com/fapi/v1/fundingRate",
+    "Stooq": "https://stooq.com/q/d/l/",
+    "FRED": "https://fred.stlouisfed.org/graph/fredgraph.csv",
+    "CoinGecko": "https://docs.coingecko.com/reference/coins-id-market-chart-range",
     "Derived": "",
 }
 
@@ -85,27 +88,27 @@ def source_links_for(source: str) -> list[dict[str, str]]:
     return links
 
 INDICATORS: list[IndicatorDefinition] = [
-    IndicatorDefinition("cn_valuation_position", "cn_equity", "A 股指数位置代理", Dimension.VALUATION, Direction.HIGH_BAD, 1, "Eastmoney / Derived", "index", "沪深300与中证500价格在历史区间越高，位置分越高"),
+    IndicatorDefinition("cn_valuation_position", "cn_equity", "A 股指数位置代理", Dimension.VALUATION, Direction.HIGH_BAD, 1, "Eastmoney / Yahoo Finance / Derived", "index", "沪深300与中证500价格在历史区间越高，位置分越高"),
     IndicatorDefinition("cn_turnover_heat", "cn_equity", "A 股成交热度", Dimension.SENTIMENT, Direction.HIGH_BAD, 1, "Eastmoney / Derived", "index", "成交额处于历史高位会推高位置分"),
-    IndicatorDefinition("cn_trend_200d", "cn_equity", "A 股 200 日趋势", Dimension.MARKET, Direction.HIGH_GOOD, 1, "Eastmoney / Derived", "%", "趋势越弱，市场位置分越高"),
-    IndicatorDefinition("cn_momentum_60d", "cn_equity", "A 股 60 日动量", Dimension.MARKET, Direction.HIGH_GOOD, 1, "Eastmoney / Derived", "%", "中期动量代理"),
-    IndicatorDefinition("cn_volatility", "cn_equity", "A 股波动率", Dimension.MARKET, Direction.HIGH_BAD, 1, "Eastmoney / Derived", "%", "波动越高，市场位置分越高"),
+    IndicatorDefinition("cn_trend_200d", "cn_equity", "A 股 200 日趋势", Dimension.MARKET, Direction.HIGH_GOOD, 1, "Eastmoney / Yahoo Finance / Derived", "%", "趋势越弱，市场位置分越高"),
+    IndicatorDefinition("cn_momentum_60d", "cn_equity", "A 股 60 日动量", Dimension.MARKET, Direction.HIGH_GOOD, 1, "Eastmoney / Yahoo Finance / Derived", "%", "中期动量代理"),
+    IndicatorDefinition("cn_volatility", "cn_equity", "A 股波动率", Dimension.MARKET, Direction.HIGH_BAD, 1, "Eastmoney / Yahoo Finance / Derived", "%", "波动越高，市场位置分越高"),
     IndicatorDefinition("cn_fx_pressure", "cn_equity", "美元兑人民币压力", Dimension.MACRO, Direction.HIGH_BAD, 1, "Yahoo Finance", "index", "美元兑人民币处于高位时，宏观位置分更高"),
 
-    IndicatorDefinition("us_valuation_position", "us_equity", "美股指数位置代理", Dimension.VALUATION, Direction.HIGH_BAD, 1, "Yahoo Finance / Derived", "index", "标普500与纳指在历史区间越高，位置分越高"),
-    IndicatorDefinition("us_vix", "us_equity", "VIX 位置", Dimension.SENTIMENT, Direction.HIGH_BAD, 1, "Yahoo Finance", "index", "VIX 越高，风险压力越高"),
-    IndicatorDefinition("us_trend_200d", "us_equity", "美股 200 日趋势", Dimension.MARKET, Direction.HIGH_GOOD, 1, "Yahoo Finance / Derived", "%", "趋势越弱，市场位置分越高"),
-    IndicatorDefinition("us_momentum_60d", "us_equity", "美股 60 日动量", Dimension.MARKET, Direction.HIGH_GOOD, 1, "Yahoo Finance / Derived", "%", "中期动量代理"),
-    IndicatorDefinition("us_volatility", "us_equity", "美股波动率", Dimension.MARKET, Direction.HIGH_BAD, 1, "Yahoo Finance / Derived", "%", "波动越高，市场位置分越高"),
-    IndicatorDefinition("us_10y_yield", "us_equity", "美国 10 年期国债收益率", Dimension.MACRO, Direction.HIGH_BAD, 1, "Yahoo Finance", "%", "长端利率越高，宏观位置分越高"),
+    IndicatorDefinition("us_valuation_position", "us_equity", "美股指数位置代理", Dimension.VALUATION, Direction.HIGH_BAD, 1, "Yahoo Finance / Stooq / Derived", "index", "标普500与纳指在历史区间越高，位置分越高"),
+    IndicatorDefinition("us_vix", "us_equity", "VIX 位置", Dimension.SENTIMENT, Direction.HIGH_BAD, 1, "Yahoo Finance / Stooq", "index", "VIX 越高，风险压力越高"),
+    IndicatorDefinition("us_trend_200d", "us_equity", "美股 200 日趋势", Dimension.MARKET, Direction.HIGH_GOOD, 1, "Yahoo Finance / Stooq / Derived", "%", "趋势越弱，市场位置分越高"),
+    IndicatorDefinition("us_momentum_60d", "us_equity", "美股 60 日动量", Dimension.MARKET, Direction.HIGH_GOOD, 1, "Yahoo Finance / Stooq / Derived", "%", "中期动量代理"),
+    IndicatorDefinition("us_volatility", "us_equity", "美股波动率", Dimension.MARKET, Direction.HIGH_BAD, 1, "Yahoo Finance / Stooq / Derived", "%", "波动越高，市场位置分越高"),
+    IndicatorDefinition("us_10y_yield", "us_equity", "美国 10 年期国债收益率", Dimension.MACRO, Direction.HIGH_BAD, 1, "Yahoo Finance / FRED", "%", "长端利率越高，宏观位置分越高"),
 
-    IndicatorDefinition("crypto_price_position", "crypto", "BTC/ETH 价格位置", Dimension.VALUATION, Direction.HIGH_BAD, 1, "Binance Spot / Derived", "index", "BTC 与 ETH 价格越接近历史高位，位置分越高"),
-    IndicatorDefinition("crypto_volume_heat", "crypto", "加密成交热度", Dimension.SENTIMENT, Direction.HIGH_BAD, 1, "Binance Spot / Derived", "index", "成交过热会推高位置分"),
+    IndicatorDefinition("crypto_price_position", "crypto", "BTC/ETH 价格位置", Dimension.VALUATION, Direction.HIGH_BAD, 1, "Binance Spot / CoinGecko / Derived", "index", "BTC 与 ETH 价格越接近历史高位，位置分越高"),
+    IndicatorDefinition("crypto_volume_heat", "crypto", "加密成交热度", Dimension.SENTIMENT, Direction.HIGH_BAD, 1, "Binance Spot / CoinGecko / Derived", "index", "成交过热会推高位置分"),
     IndicatorDefinition("crypto_fear_greed", "crypto", "加密恐惧贪婪", Dimension.SENTIMENT, Direction.HIGH_BAD, 1, "Alternative.me", "index", "贪婪越高，位置分越高"),
     IndicatorDefinition("crypto_funding", "crypto", "BTC 永续资金费率", Dimension.SENTIMENT, Direction.HIGH_BAD, 1, "Binance Futures", "%", "多头拥挤会推高位置分"),
-    IndicatorDefinition("crypto_trend_200d", "crypto", "加密 200 日趋势", Dimension.MARKET, Direction.HIGH_GOOD, 1, "Binance Spot / Derived", "%", "趋势越弱，市场位置分越高"),
-    IndicatorDefinition("crypto_momentum_60d", "crypto", "加密 60 日动量", Dimension.MARKET, Direction.HIGH_GOOD, 1, "Binance Spot / Derived", "%", "中期动量代理"),
-    IndicatorDefinition("crypto_volatility", "crypto", "加密波动率", Dimension.MARKET, Direction.HIGH_BAD, 1, "Binance Spot / Derived", "%", "波动越高，市场位置分越高"),
+    IndicatorDefinition("crypto_trend_200d", "crypto", "加密 200 日趋势", Dimension.MARKET, Direction.HIGH_GOOD, 1, "Binance Spot / CoinGecko / Derived", "%", "趋势越弱，市场位置分越高"),
+    IndicatorDefinition("crypto_momentum_60d", "crypto", "加密 60 日动量", Dimension.MARKET, Direction.HIGH_GOOD, 1, "Binance Spot / CoinGecko / Derived", "%", "中期动量代理"),
+    IndicatorDefinition("crypto_volatility", "crypto", "加密波动率", Dimension.MARKET, Direction.HIGH_BAD, 1, "Binance Spot / CoinGecko / Derived", "%", "波动越高，市场位置分越高"),
     IndicatorDefinition("crypto_dxy", "crypto", "美元指数位置", Dimension.MACRO, Direction.HIGH_BAD, 1, "Yahoo Finance", "index", "美元走强通常压制风险资产"),
 ]
 

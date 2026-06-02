@@ -69,7 +69,9 @@ Runtime config is read from `.env`:
 ```bash
 CIRCLEPREDICT_HOST=0.0.0.0
 CIRCLEPREDICT_PORT=15121
-CIRCLEPREDICT_PROXY_URL=http://127.0.0.1:7890
+CIRCLEPREDICT_PROXY_URL=
+CIRCLEPREDICT_HTTP_RETRIES=2
+CIRCLEPREDICT_FAILURE_RETRY_MINUTES=15
 CIRCLEPREDICT_WECOM_WEBHOOK_URL=
 CIRCLEPREDICT_PUBLIC_URL=http://127.0.0.1:15121/
 ```
@@ -79,6 +81,20 @@ WeCom webhook, and public dashboard URL as needed:
 
 ```bash
 cp .env.example .env
+```
+
+If the machine can access the data sources directly, keep
+`CIRCLEPREDICT_PROXY_URL=` empty. If it must use a local proxy, set the HTTP
+proxy endpoint:
+
+```bash
+CIRCLEPREDICT_PROXY_URL=http://127.0.0.1:7890
+```
+
+You can also force direct access with:
+
+```bash
+CIRCLEPREDICT_PROXY_URL=direct
 ```
 
 Install dependencies. The project currently uses only the Python standard
@@ -113,6 +129,12 @@ Health check:
 
 ```bash
 curl http://127.0.0.1:15121/health
+```
+
+Force a fresh data pull:
+
+```bash
+curl "http://127.0.0.1:15121/api/dashboard?refresh=1"
 ```
 
 ## macOS Auto Start
@@ -214,11 +236,43 @@ Runtime scoring uses real HTTP data only. If a source fails, the related
 indicator is omitted and reported; the app does not generate replacement
 market values.
 
-Current sources:
+Cache and retry behavior:
 
-- A-shares: Eastmoney index K-line data and Yahoo Finance CNY exchange data.
-- U.S. equities: Yahoo Finance index, VIX, and 10-year yield data.
-- Crypto: Binance spot K-lines, Binance futures funding, Alternative.me
-  Fear & Greed, and Yahoo Finance DXY data.
+- A fully successful payload is cached in memory until the next Beijing-time
+  06:00 rollover and is also written to `.cache/dashboard-last-success.json`.
+- A degraded payload is cached only for `CIRCLEPREDICT_FAILURE_RETRY_MINUTES`
+  minutes, so the service will retry during the same day.
+- If a fresh pull fails but a previous successful payload exists, the app
+  returns the previous successful real data and marks it as stale fallback.
+- `GET /api/dashboard?refresh=1` bypasses the current in-memory cache and
+  forces a fresh pull.
+
+Current sources and fallbacks:
+
+- A-shares: Eastmoney index K-line data; Yahoo Finance A-share index proxy if
+  Eastmoney is unavailable; Yahoo Finance CNY exchange data.
+- U.S. equities: Yahoo Finance index, VIX, and 10-year yield data; Stooq ETF
+  and VIX proxies plus FRED DGS10 as fallbacks.
+- Crypto: Binance spot K-lines; CoinGecko market chart as a fallback; Binance
+  futures funding, Alternative.me Fear & Greed, and Yahoo Finance DXY data.
 
 `SampleMarketDataProvider` exists only for unit tests.
+
+## Network Troubleshooting
+
+If `./scripts/send_daily_report.sh --dry-run` shows SSL handshake timeouts,
+HTTP 403, or `Remote end closed connection without response`, check whether
+the proxy in `.env` matches the new machine:
+
+```bash
+curl -I https://query1.finance.yahoo.com
+curl -x http://127.0.0.1:7890 -I https://query1.finance.yahoo.com
+```
+
+Use direct mode if the first command works:
+
+```bash
+CIRCLEPREDICT_PROXY_URL=
+```
+
+Use the proxy URL only if the second command works and the proxy app is running.

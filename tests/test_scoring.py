@@ -4,9 +4,16 @@ import unittest
 from datetime import date, datetime, timedelta, timezone
 
 from circle_predict.config import LONG_WINDOW, SHORT_WINDOW
-from circle_predict.data_provider import SampleMarketDataProvider
+from circle_predict.data_provider import SampleMarketDataProvider, normalize_proxy_url
 from circle_predict.daily_report import build_daily_report
-from circle_predict.dashboard import build_dashboard_payload, next_cache_expiry
+import circle_predict.dashboard as dashboard_module
+from circle_predict.dashboard import (
+    build_dashboard_payload,
+    clear_dashboard_cache,
+    get_dashboard_payload,
+    next_cache_expiry,
+    payload_is_degraded,
+)
 from circle_predict.models import Direction, IndicatorObservation, MarketDataset, ScoreWindow
 from circle_predict.scoring import build_market_payload, percentile_score, score_market_window
 
@@ -15,6 +22,9 @@ UTC = timezone.utc
 
 
 class ScoringTests(unittest.TestCase):
+    def tearDown(self) -> None:
+        clear_dashboard_cache()
+
     def test_percentile_score_handles_direction(self) -> None:
         values = [10, 20, 30, 40]
 
@@ -133,6 +143,36 @@ class ScoringTests(unittest.TestCase):
         self.assertEqual(markets["cn_equity"]["position_label"], "数据不可用")
         self.assertIn("A 股接口超时", markets["cn_equity"]["unavailable_reason"])
 
+    def test_degraded_payload_is_detected(self) -> None:
+        payload = build_dashboard_payload(SampleMarketDataProvider())
+        self.assertFalse(payload_is_degraded(payload))
+
+        payload["data_notes"].append("Yahoo 获取失败，宏观维度缺失。")
+        self.assertTrue(payload_is_degraded(payload))
+
+    def test_failed_refresh_uses_recent_success_cache(self) -> None:
+        class FailingProvider:
+            mode = "test"
+            notes = ["_load_cn_equity 失败：HTTP Error 429: Too Many Requests"]
+            failures = {"cn_equity": "HTTP Error 429: Too Many Requests"}
+
+            def load(self):
+                return [dataset for dataset in SampleMarketDataProvider().load() if dataset.market != "cn_equity"]
+
+        original_disk_cache_path = dashboard_module.DISK_CACHE_PATH
+        dashboard_module.DISK_CACHE_PATH = original_disk_cache_path.parent / "test-dashboard-last-success.json"
+        try:
+            success_payload = get_dashboard_payload(SampleMarketDataProvider(), force_refresh=True)
+            failed_payload = get_dashboard_payload(FailingProvider(), force_refresh=True)
+
+            self.assertFalse(success_payload.get("using_stale_success_cache", False))
+            self.assertTrue(failed_payload["using_stale_success_cache"])
+            self.assertEqual(failed_payload["cache"]["status"], "stale_fallback")
+            self.assertTrue(all(market.get("available") is not False for market in failed_payload["markets"]))
+        finally:
+            dashboard_module.DISK_CACHE_PATH.unlink(missing_ok=True)
+            dashboard_module.DISK_CACHE_PATH = original_disk_cache_path
+
     def test_daily_report_contains_market_scores(self) -> None:
         payload = build_dashboard_payload(SampleMarketDataProvider())
         report = build_daily_report(payload)
@@ -143,6 +183,12 @@ class ScoringTests(unittest.TestCase):
         self.assertIn("虚拟货币", report)
         self.assertIn("短周期", report)
         self.assertIn("四维", report)
+
+    def test_proxy_url_can_be_disabled(self) -> None:
+        self.assertEqual(normalize_proxy_url(""), "")
+        self.assertEqual(normalize_proxy_url("direct"), "")
+        self.assertEqual(normalize_proxy_url("none"), "")
+        self.assertEqual(normalize_proxy_url("http://127.0.0.1:7890"), "http://127.0.0.1:7890")
 
 
 if __name__ == "__main__":

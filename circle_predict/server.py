@@ -5,7 +5,7 @@ import os
 from http import HTTPStatus
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 
 from circle_predict.dashboard import get_dashboard_payload
 from circle_predict.env import load_env
@@ -28,7 +28,9 @@ class DashboardHandler(SimpleHTTPRequestHandler):
     def do_GET(self) -> None:
         parsed = urlparse(self.path)
         if parsed.path == "/api/dashboard":
-            self._send_json(get_dashboard_payload())
+            query = parse_qs(parsed.query)
+            force_refresh = query.get("refresh", ["0"])[0] in {"1", "true", "yes"}
+            self._send_json(get_dashboard_payload(force_refresh=force_refresh))
             return
         if parsed.path == "/health":
             self._send_json({"status": "ok"})
