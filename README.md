@@ -168,6 +168,10 @@ The helper script starts the service with the production defaults:
 ./scripts/start_circle_predict.sh
 ```
 
+The helper scripts prefer the project virtual environment automatically:
+`.venv/bin/python3`, then `venv/bin/python3`, then system `python3`. Set
+`PYTHON_BIN=/path/to/python3` only if you need to override this.
+
 Health check:
 
 ```bash
@@ -192,8 +196,9 @@ cp .env.example .env
 ```
 
 Edit `.env` before installing if the target Mac uses a different proxy port.
-The LaunchAgent starts `scripts/start_circle_predict.sh`, and that script loads
-`.env` every time the service starts.
+The LaunchAgent starts `scripts/start_circle_predict.sh`; Python reads `.env`
+inside the app, so shell scripts do not parse `.env` values such as cookies or
+webhook URLs.
 
 This creates and loads the server LaunchAgent:
 
