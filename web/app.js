@@ -140,6 +140,24 @@ function renderDataNotice(payload) {
     return;
   }
 
+  if (payload.using_stale_success_cache) {
+    const retryText = payload.cache && payload.cache.retry_after_minutes
+      ? `系统会在约 ${payload.cache.retry_after_minutes} 分钟后再次重试。`
+      : "系统会稍后再次重试。";
+    root.className = "data-notice fallback";
+    root.innerHTML = `
+      <div class="notice-title">沿用最近成功数据</div>
+      <div class="notice-copy">
+        当前卡片、曲线和指标明细来自最近一次成功拉取的真实数据；本次刷新数据源请求失败，${retryText}
+        <details>
+          <summary>查看本次失败原因</summary>
+          <div>${payload.data_notes.join(" ")}</div>
+        </details>
+      </div>
+    `;
+    return;
+  }
+
   const unavailableMarkets = (payload.markets || []).filter((market) => market.available === false);
   const failureNotes = payload.data_notes.filter((note) =>
     note.includes("获取失败") ||

@@ -1,3 +1,2 @@
-# CirclePredict currently uses only the Python standard library.
-# Keep this file so deployment scripts can safely run:
-#   python3 -m pip install -r requirements.txt
+requests[socks]>=2.31,<3
+curl-cffi>=0.7,<1

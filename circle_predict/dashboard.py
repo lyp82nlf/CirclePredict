@@ -96,9 +96,12 @@ def short_retry_expiry(now: datetime | None = None) -> datetime:
 
 
 def payload_is_degraded(payload: dict) -> bool:
-    unavailable = any(market.get("available") is False for market in payload.get("markets", []))
+    return any(market.get("available") is False for market in payload.get("markets", []))
+
+
+def payload_has_partial_failures(payload: dict) -> bool:
     notes = " ".join(payload.get("data_notes") or [])
-    return unavailable or any(pattern in notes for pattern in FAILURE_NOTE_PATTERNS)
+    return any(pattern in notes for pattern in FAILURE_NOTE_PATTERNS)
 
 
 def copy_payload(payload: dict) -> dict:
@@ -178,6 +181,17 @@ def get_dashboard_payload(provider: MarketDataProvider | None = None, force_refr
         payload = copy_payload(fetched_payload)
         payload["cache"] = {
             "status": "degraded_miss",
+            "expires_at": _CACHE_EXPIRES_AT.isoformat(),
+            "retry_after_minutes": FAILURE_RETRY_MINUTES,
+        }
+        return payload
+
+    if payload_has_partial_failures(fetched_payload):
+        _CACHE = fetched_payload
+        _CACHE_EXPIRES_AT = short_retry_expiry(now)
+        payload = copy_payload(fetched_payload)
+        payload["cache"] = {
+            "status": "partial_miss",
             "expires_at": _CACHE_EXPIRES_AT.isoformat(),
             "retry_after_minutes": FAILURE_RETRY_MINUTES,
         }

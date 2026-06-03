@@ -71,7 +71,14 @@ CIRCLEPREDICT_HOST=0.0.0.0
 CIRCLEPREDICT_PORT=15121
 CIRCLEPREDICT_PROXY_URL=
 CIRCLEPREDICT_HTTP_RETRIES=2
+CIRCLEPREDICT_CURL_FALLBACK=1
+CIRCLEPREDICT_CURL_RETRIES=2
 CIRCLEPREDICT_FAILURE_RETRY_MINUTES=15
+CIRCLEPREDICT_STOOQ_API_KEY=
+CIRCLEPREDICT_YAHOO_COOKIE=
+CIRCLEPREDICT_YAHOO_CURL_RETRIES=3
+CIRCLEPREDICT_YAHOO_REQUEST_SPACING_SECONDS=1.5
+CIRCLEPREDICT_YAHOO_IMPERSONATE=safari_ios,chrome
 CIRCLEPREDICT_WECOM_WEBHOOK_URL=
 CIRCLEPREDICT_PUBLIC_URL=http://127.0.0.1:15121/
 ```
@@ -91,17 +98,53 @@ proxy endpoint:
 CIRCLEPREDICT_PROXY_URL=http://127.0.0.1:7890
 ```
 
+SOCKS proxies are also supported:
+
+```bash
+CIRCLEPREDICT_PROXY_URL=socks5h://127.0.0.1:7890
+```
+
 You can also force direct access with:
 
 ```bash
 CIRCLEPREDICT_PROXY_URL=direct
 ```
 
-Install dependencies. The project currently uses only the Python standard
-library, so this is a no-op, but it is safe to run on every machine:
+Install dependencies:
 
 ```bash
 python3 -m pip install -r requirements.txt
+```
+
+If Python HTTP requests fail but `curl -x ...` works in your terminal, keep
+`CIRCLEPREDICT_CURL_FALLBACK=1`. The data client will try `requests` first and
+then fall back to the system `curl` command with the same proxy. Generic curl
+fallbacks retry `CIRCLEPREDICT_CURL_RETRIES` times to absorb transient empty
+replies from sources such as Eastmoney.
+
+Stooq may require an API key for CSV downloads. Keep
+`CIRCLEPREDICT_STOOQ_API_KEY=` empty to disable Stooq fallback, or set it if
+you have one.
+
+Yahoo Finance may return `429 Too Many Requests` to clean server-side requests
+even when the same URL works in Chrome. If that happens, copy the browser
+cookie from a working Yahoo request and set it in `.env`:
+
+```bash
+CIRCLEPREDICT_YAHOO_COOKIE=A3=...; A1=...; A1S=...
+```
+
+The app uses this only for `query1.finance.yahoo.com` requests. Yahoo requests
+are serialized globally and first use `curl_cffi` browser TLS impersonation
+with `CIRCLEPREDICT_YAHOO_IMPERSONATE`; if that fails, the client falls back to
+system `curl` with the same browser-like headers and cookie. This is necessary
+because Chrome's copied curl does not include Chrome's TLS fingerprint, and
+plain Python/curl requests can still hit 429. Do not commit this value.
+
+To diagnose data-source access from the same code path used by the app:
+
+```bash
+python3 -m circle_predict.diagnostics
 ```
 
 ```bash
@@ -251,8 +294,8 @@ Current sources and fallbacks:
 
 - A-shares: Eastmoney index K-line data; Yahoo Finance A-share index proxy if
   Eastmoney is unavailable; Yahoo Finance CNY exchange data.
-- U.S. equities: Yahoo Finance index, VIX, and 10-year yield data; Stooq ETF
-  and VIX proxies plus FRED DGS10 as fallbacks.
+- U.S. equities: Stooq ETF data for SPY/QQQ with Yahoo index fallback; Yahoo
+  Finance VIX and 10-year yield data, with FRED DGS10 as the yield fallback.
 - Crypto: Binance spot K-lines; CoinGecko market chart as a fallback; Binance
   futures funding, Alternative.me Fear & Greed, and Yahoo Finance DXY data.
 
